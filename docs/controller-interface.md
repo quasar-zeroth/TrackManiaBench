@@ -1,13 +1,12 @@
-# Boundary for a future RL controller
+# Offline/live controller boundary
 
-This release creates offline data. It does not expose live game control, reset a running episode, compute rewards, or claim an online RL environment.
+The [live Python API](live-rl.md) supports real-time game interaction and an optional exact-step telemetry backend, with an Elemental adapter. These live observations are distinct from the measured alignment of exported replay videos.
 
-Future work should consume the same contracts:
+1. **Offline observations** retain run ID, original frame index and actual video PTS. Eligible transitions target the original next frame, without joining across filtered gaps.
+2. **Live realtime observations** carry host capture/receive timestamps and previous/applied controls. The game continues during inference. The signed telemetry plugin exposes no simulation clock, so host time is never relabeled as game time.
+3. **Live lockstep observations** carry acknowledged tick counts and race time from a separately installed TICK server. Its current Python API supplies no synchronized RGB.
+4. **Actions** use steering, throttle and brake. Original replay controls retain their 100 Hz source timeline; live control resolution and digital pedal thresholds depend on the backend. Requested and applied controls stay distinguishable.
+5. **Validity** preserves unknown source inputs, conditional offline timing, live packet/capture skew, watchdog faults and termination/truncation separately. Missing observations are not fabricated.
+6. **Learning** preserves episode boundaries and offline whole-player splits. Stock Elemental PPO discounts per decision; elapsed-time discounting requires a custom collector/GAE. Offline replay physics and live controller behavior must be compared under known game versions and measured latency.
 
-1. **Observation identity:** run ID, original frame index and actual video PTS. Frame indices are never renumbered after filtering. An eligible transition targets the original next frame, not the next retained frame across a gap.
-2. **Time:** explicit mapping between video, replay-record and race clocks with measured error bounds. Conditional evidence stays conditional. Source game builds are part of provenance.
-3. **Actions:** raw held steering, throttle and brake on the original 100 Hz timeline, with respawn impulses kept at their actual event times. A 50 FPS interval can contain several clipped substeps; do not replace them with an arbitrary single sampled action.
-4. **Validity:** strict action-conditioned masks, separate experimental masks and video-only usability. Missing first controls and unavailable endpoint images are not fabricated.
-5. **Episodes:** preserve run boundaries and whole-player data splits. Offline recorded inputs do not guarantee that replay physics or online control behavior match another game version.
-
-A later controller can add an observation source, action sink, reset/termination behavior and reward function behind a separate interface. Before online/offline comparisons, measure action latency and exposure timing in the running game and validate that steering conventions and simulation versions match. Nothing in this repository assumes those checks have already passed.
+A working API is not a trained policy or evidence of racing performance. Establish reset, action, camera and timing checks on the installation before scaling training.

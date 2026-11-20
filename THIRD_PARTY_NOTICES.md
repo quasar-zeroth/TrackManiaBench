@@ -11,4 +11,6 @@ The full retained notices are in `extractor/THIRD_PARTY_NOTICES.md`. NuGet lockf
 
 Python dependencies NumPy and Pillow retain their upstream licenses. FFmpeg, .NET, Openplanet, Trackmania and GhostToReplay are external prerequisites, not vendored binaries. No signed Openplanet plugin is redistributed or modified here.
 
+The optional live API uses MSS, vgamepad, libevdev's Python bindings, PyTorch and tickgym under their upstream licenses. The TMRL telemetry protocol and unchanged signed GrabData plugin come from https://github.com/trackmania-rl/tmrl. The installer fetches a hash-pinned upstream plugin; its source and binary are not included in this repository. TICK's server is a separate prerequisite and is not distributed here.
+
 Trackmania.io supplies leaderboard and map metadata. **Powered by Trackmania.io.** Its API usage policy is https://openplanet.dev/tmio/api. The data collection code preserves attribution; the code license does not relicense API data, replay recordings, maps or game artwork.

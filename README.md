@@ -4,7 +4,9 @@ Build Trackmania 2020 datasets from leaderboard replays: **native third-person c
 
 This project reorganizes the pipeline used to produce a verified 250-run dataset for **Summer 2020 – 01**. It includes the actual native Replay Editor workflow, source decoding, quality checks, frame/action joining, and portable release verification. Map UID, cohort size, paths, remote machine, and dataset splits are configurable.
 
-The current focus is offline dataset generation for world models and autoregressive models. **A live RL controller is planned as follow-up work; it is not implemented here.** The action and observation contracts are documented so future control work can use the same time semantics.
+The project supports offline dataset generation for world models and autoregressive models, plus a **Python live-control API compatible with Elemental's RL environment interface**. Realtime control uses the running game's clock and third-person screen capture. An optional tickgym backend supports acknowledged simulation steps through a separately provisioned TICK server; that backend is telemetry-only and has not been validated under Proton. See [the live RL guide](docs/live-rl.md) for setup and timing limits.
+
+The live API is experimental. Its automated Elemental integration passes, but the first Ubuntu desktop test was blocked at the game's pre-race menu; successful driving and terminal reset are not yet established. See [the live validation record](docs/live-validation.md) before using it for training.
 
 ## What it produces
 
@@ -71,6 +73,7 @@ The validated video profile is fixed at 640×360/50 FPS. Changing it requires up
 | Directory | Responsibility |
 | --- | --- |
 | `trackmaniabench/` | CLI, configuration, stage discovery |
+| `trackmaniabench/live/` | Realtime controls/capture, optional tickgym stepping, Elemental adapter |
 | `collector/` | Cached leaderboard snapshot, official replay downloads, signed-plugin batch files |
 | `extractor/` | Strict GBX input decoder and batch integrity checks |
 | `dataset/clip-inspector/` | Native scene inspection, replay comparison, controlled chase-camera clips |
@@ -81,7 +84,7 @@ The validated video profile is fixed at 640×360/50 FPS. Changing it requires up
 
 Version suffixes are retained where they distinguish evidence schemas or production validation semantics. Historical machine recovery scripts, superseded prototypes, real review approvals, game files and compiled binaries are excluded.
 
-See [data and action semantics](docs/dataset.md), [verification](docs/verification.md), and [the future controller boundary](docs/controller-interface.md).
+See [data and action semantics](docs/dataset.md), [verification](docs/verification.md), and [live controller timing](docs/controller-interface.md).
 
 ## Tests
 

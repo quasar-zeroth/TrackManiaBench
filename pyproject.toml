@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "trackmaniabench"
-version = "0.1.0"
+version = "0.2.0"
 description = "Reproducible Trackmania replay datasets with native chase-camera video and original controls"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -15,6 +15,9 @@ dependencies = ["numpy>=1.24,<3", "Pillow>=10,<13"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "build>=1.2,<2", "ruff>=0.12,<1"]
+live = ["mss>=9,<11", "vgamepad>=0.2,<0.3", "libevdev>=0.11,<1; sys_platform == 'linux'"]
+elemental = ["torch>=2.9,<3"]
+tickgym = ["tickgym==1.1.0"]
 
 [project.scripts]
 tmbench = "trackmaniabench.cli:main"
