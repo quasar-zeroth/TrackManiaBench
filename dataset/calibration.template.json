@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "verified": false,
+  "verified_by": "",
+  "verified_utc": "",
+  "method": "Describe independent start/middle/finish race-clock measurement in the final video's actual frames, including any clip/record mapping evidence.",
+  "run_id": "",
+  "account_id": "",
+  "map_uid": "",
+  "map_sha256": "",
+  "ghost_sha256": "",
+  "finish_time_ms": null,
+  "action_metadata_sha256": "",
+  "render_result_sha256": "",
+  "video_sha256": "",
+  "mapping": {
+    "video_pts_anchor_ms": null,
+    "race_time_anchor_ms": null,
+    "race_ms_per_video_ms": null,
+    "max_absolute_error_ms": null
+  },
+  "native_timeline": {
+    "serialized_scene": {
+      "preroll_ms": null,
+      "postroll_ms": null,
+      "record_start_ms": null,
+      "record_end_ms": null,
+      "entity_start_ms": null,
+      "entity_end_ms": null,
+      "camera_start_ms": null,
+      "camera_end_ms": null,
+      "start_offset_ms": null,
+      "time_scale": null
+    },
+    "video_to_clip": {
+      "video_pts_anchor_ms": null,
+      "clip_time_anchor_ms": null,
+      "clip_ms_per_video_ms": null,
+      "max_absolute_error_ms": null,
+      "method": "Measure video PTS to native clip time using actual rendered markers and pin the diagnostic video, marker-frame images, clean/clock clip equivalence and readback inspections.",
+      "evidence_files": []
+    },
+    "record_to_race": {
+      "record_time_anchor_ms": null,
+      "race_time_anchor_ms": null,
+      "race_ms_per_record_ms": null,
+      "max_absolute_error_ms": null,
+      "method": "Corroborate the preserved record clock against original race-time actions and actual native race timer/vehicle positions; a serialized zero offset alone is insufficient.",
+      "evidence_files": []
+    }
+  },
+  "measurements": [
+    {"phase": "start", "frame_index": null, "observed_race_ms": null, "evidence": {"path": "", "sha256": ""}},
+    {"phase": "middle", "frame_index": null, "observed_race_ms": null, "evidence": {"path": "", "sha256": ""}},
+    {"phase": "finish", "frame_index": null, "observed_race_ms": null, "evidence": {"path": "", "sha256": ""}}
+  ],
+  "observation_window": {
+    "first_usable_frame_index": null,
+    "last_usable_frame_index": null,
+    "first_usable_race_ms": null,
+    "last_usable_race_ms": null,
+    "reviewed_contiguous_race_visibility": false,
+    "method": "Measure the first and last usable actual native frames and inspect visibility across the entire interval. Retain any unobserved original race prefix/suffix and all raw controls explicitly; never substitute generated or repeated frames.",
+    "evidence_files": []
+  },
+  "evidence_files": []
+}

@@ -1,0 +1,44 @@
+name: Verify
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install media tools and Python package
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg liblzo2-2
+          python -m pip install -e '.[dev]'
+      - name: Offline regression tests
+        run: python scripts/check.py
+      - name: Static checks
+        run: ruff check .
+      - name: Restore and build strict extractor
+        run: |
+          dotnet restore extractor/TrackmaniaExtractor.csproj --locked-mode
+          dotnet build extractor/TrackmaniaExtractor.csproj --no-restore -c Release
+          dotnet run --project extractor/TrackmaniaExtractor.csproj --no-build -c Release -- --self-test
+      - name: Restore and build native scene inspector
+        run: |
+          dotnet restore dataset/clip-inspector/TrackmaniaClipInspector.csproj --locked-mode
+          dotnet build dataset/clip-inspector/TrackmaniaClipInspector.csproj --no-restore -c Release
+          dotnet run --project dataset/clip-inspector/TrackmaniaClipInspector.csproj --no-build -c Release -- --self-test-timing
+      - name: Restore and build optional control research probe
+        run: |
+          dotnet restore renderer/research/vehicle-controls/VehicleControlProbe/VehicleControlProbe.csproj --locked-mode
+          dotnet build renderer/research/vehicle-controls/VehicleControlProbe/VehicleControlProbe.csproj --no-restore -c Release
+      - name: Build source and wheel distributions
+        run: python -m build

@@ -1,0 +1,17 @@
+include LICENSE THIRD_PARTY_NOTICES.md README.md
+recursive-include docs *.md
+recursive-include configs *.toml
+recursive-include scripts *.py
+recursive-include tests *.py
+recursive-include extractor *.cs *.csproj *.json *.Config *.md
+recursive-include dataset/clip-inspector *.cs *.csproj *.json
+recursive-include renderer/research *.cs *.csproj *.json
+global-exclude *.py[cod]
+prune extractor/bin
+prune extractor/obj
+prune dataset/clip-inspector/bin
+prune dataset/clip-inspector/obj
+prune renderer/research/vehicle-controls/VehicleControlProbe/bin
+prune renderer/research/vehicle-controls/VehicleControlProbe/obj
+prune build
+prune dist

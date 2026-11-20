@@ -1,0 +1,64 @@
+{
+  "passed": false,
+  "verified_by": null,
+  "verified_utc": null,
+  "evidence_files": [],
+  "map_sha256": null,
+  "settings": {
+    "width": 640,
+    "height": 360,
+    "fps": 50,
+    "gamecam": 2,
+    "entity": 1,
+    "container": "webm",
+    "audio": false,
+    "native_full_clip": true,
+    "hud3d": false,
+    "motion_blur": false,
+    "dof": false,
+    "remanence": 0,
+    "sharpen": false,
+    "stereo3d": false,
+    "tile_split": false
+  },
+  "plugin_build": "dataset-renderer-0.2.0",
+  "checks": {
+    "correct_single_ghost": {
+      "passed": false,
+      "evidence": null
+    },
+    "fixed_camera_whole_run": {
+      "passed": false,
+      "evidence": null
+    },
+    "no_hud": {
+      "passed": false,
+      "evidence": null
+    },
+    "motion_blur_disabled": {
+      "passed": false,
+      "evidence": null
+    },
+    "frame_race_clock_alignment": {
+      "passed": false,
+      "evidence": null
+    },
+    "finish_covered": {
+      "passed": false,
+      "evidence": null
+    },
+    "repeat_render_consistency": {
+      "passed": false,
+      "evidence": null
+    },
+    "resume_preserves_outputs": {
+      "passed": false,
+      "evidence": null
+    },
+    "action_decode_complete": {
+      "passed": false,
+      "evidence": null
+    }
+  },
+  "pilot_runs": []
+}

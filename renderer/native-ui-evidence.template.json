@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "purpose": "production",
+  "run_id": null,
+  "ghost_sha256": null,
+  "map_sha256": null,
+  "settings": {
+    "width": 640,
+    "height": 360,
+    "fps": 50,
+    "gamecam": 2,
+    "entity": 1,
+    "container": "webm",
+    "audio": false,
+    "native_full_clip": true,
+    "hud3d": false,
+    "motion_blur": null,
+    "dof": null,
+    "remanence": 0,
+    "sharpen": false,
+    "stereo3d": false,
+    "tile_split": null,
+    "antialias": 4,
+    "persistence_duration_seconds": 0,
+    "quality_preset": "low",
+    "fx_tracks": false
+  },
+  "native_replay": {
+    "path": null,
+    "sha256": null
+  },
+  "original_action_metadata": {
+    "path": null,
+    "sha256": null
+  },
+  "replay_action_metadata": {
+    "path": null,
+    "sha256": null
+  },
+  "imported_clip": {
+    "path": null,
+    "sha256": null
+  },
+  "imported_clip_inspection": {
+    "path": null,
+    "sha256": null
+  },
+  "reexported_clip": {
+    "path": null,
+    "sha256": null
+  },
+  "reexported_clip_inspection": {
+    "path": null,
+    "sha256": null
+  },
+  "map_comparison": {
+    "path": null,
+    "sha256": null
+  },
+  "native_video": {
+    "path": null,
+    "sha256": null
+  },
+  "file_closure": {
+    "path": null,
+    "sha256": null
+  },
+  "settings_observation": {
+    "verified_by": null,
+    "verified_utc": null,
+    "evidence_files": [],
+    "settings": {
+      "width": 640,
+      "height": 360,
+      "fps": 50,
+      "gamecam": 2,
+      "entity": 1,
+      "container": "webm",
+      "audio": false,
+      "native_full_clip": true,
+      "hud3d": false,
+      "motion_blur": null,
+      "dof": null,
+      "remanence": 0,
+      "sharpen": false,
+      "stereo3d": false,
+      "tile_split": null,
+      "antialias": 4,
+      "persistence_duration_seconds": 0,
+      "quality_preset": "low",
+      "fx_tracks": false
+    },
+    "unobserved_settings": [
+      "dof",
+      "motion_blur",
+      "tile_split"
+    ]
+  },
+  "scene_observation": {
+    "verified_by": null,
+    "verified_utc": null,
+    "evidence_files": [],
+    "native_replay_sha256": null,
+    "imported_clip_sha256": null,
+    "reexported_clip_sha256": null,
+    "unchanged_until_render": false
+  },
+  "completion_observation": {
+    "verified_by": null,
+    "verified_utc": null,
+    "evidence_files": [],
+    "native_ui_returned": false
+  }
+}

@@ -1,0 +1,36 @@
+schema_version = 1
+
+[dataset]
+cohort = "summer2020-01-v1"
+count = 250
+
+[track]
+# Public example: Summer 2020 - 01. Replace with another map UID.
+uid = "XJ_JEjWGoAexDWe8qfaOjEcq5l8"
+
+[paths]
+# Relative paths resolve against this file, not the current directory.
+workspace = "../data/summer2020-01"
+# Optional: use a locally obtained map instead of downloading it.
+# map_file = "/data/maps/source.Map.Gbx"
+# Optional: explicit reviewed source coverage policy; empty means reject unknown cases.
+# coverage_policy = "/data/reviews/coverage-policy.json"
+
+[collection]
+# Use a descriptive User-Agent and follow https://openplanet.dev/tmio/api.
+user_agent = "TrackManiaBench/0.1 (research replay dataset)"
+
+[render]
+profile = "native-chase-360p50"
+
+[remote]
+# Fill these in before native rendering. No password or token belongs here.
+ssh_host = "render-pc"
+expected_hostname = "render-pc"
+data_root = "/data/trackmaniabench"
+game_documents = "/path/to/Proton/pfx/drive_c/users/steamuser/Documents/Trackmania"
+display = ":0"
+xauthority = "/path/to/Xauthority"
+xdotool = "/usr/bin/xdotool"
+# Optional: only if remote screenshot tools need a custom library search path.
+# library_path = "/opt/media/lib"

@@ -1,0 +1,1095 @@
+{
+  "clear.json": {
+    "version": 1,
+    "size": [
+      1920,
+      1080
+    ],
+    "states": {
+      "delete_tracks_confirmation": {
+        "regions": [
+          {
+            "image": "captures/delete_confirmation.png",
+            "rect": [
+              997,
+              317,
+              167,
+              28
+            ]
+          },
+          {
+            "image": "captures/delete_confirmation.png",
+            "rect": [
+              899,
+              397,
+              371,
+              47
+            ],
+            "match_mode": "white_text",
+            "max_text_mask_error": 0.06
+          },
+          {
+            "image": "captures/delete_confirmation.png",
+            "rect": [
+              957,
+              490,
+              58,
+              27
+            ]
+          }
+        ]
+      },
+      "editor_empty_blocks": {
+        "regions": [
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              375,
+              803,
+              135,
+              38
+            ]
+          },
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              410,
+              1028,
+              95,
+              38
+            ]
+          },
+          {
+            "image": "captures/editor_empty.png",
+            "rect": [
+              265,
+              844,
+              300,
+              65
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          }
+        ]
+      },
+      "editor_ready": {
+        "regions": [
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              375,
+              803,
+              135,
+              38
+            ]
+          },
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              410,
+              1028,
+              95,
+              38
+            ]
+          }
+        ]
+      },
+      "fixed_slot_folder": {
+        "regions": [
+          {
+            "image": "captures/queue_folder.png",
+            "rect": [
+              850,
+              116,
+              222,
+              32
+            ]
+          },
+          {
+            "image": "captures/queue_folder.png",
+            "rect": [
+              748,
+              201,
+              340,
+              28
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/queue_folder.png",
+            "rect": [
+              739,
+              260,
+              240,
+              28
+            ],
+            "match_mode": "white_text",
+            "max_text_mask_error": 0.06
+          }
+        ]
+      },
+      "fixed_slot_parent": {
+        "regions": [
+          {
+            "image": "captures/clips_parent.png",
+            "rect": [
+              850,
+              116,
+              222,
+              32
+            ]
+          },
+          {
+            "image": "captures/clips_parent.png",
+            "rect": [
+              748,
+              201,
+              340,
+              28
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/clips_parent.png",
+            "rect": [
+              739,
+              297,
+              170,
+              28
+            ],
+            "match_mode": "white_text",
+            "max_text_mask_error": 0.06
+          }
+        ]
+      }
+    },
+    "steps": [
+      {
+        "before": "editor_ready",
+        "action": {
+          "kind": "click",
+          "x": 248,
+          "y": 829
+        },
+        "after": "delete_tracks_confirmation",
+        "timeout_seconds": 30
+      },
+      {
+        "before": "delete_tracks_confirmation",
+        "action": {
+          "kind": "click",
+          "x": 983,
+          "y": 505
+        },
+        "after": "editor_empty_blocks",
+        "timeout_seconds": 30
+      },
+      {
+        "before": "editor_empty_blocks",
+        "action": {
+          "kind": "click",
+          "x": 261,
+          "y": 1048
+        },
+        "after": "fixed_slot_parent",
+        "timeout_seconds": 30
+      },
+      {
+        "before": "fixed_slot_parent",
+        "action": {
+          "kind": "click",
+          "x": 938,
+          "y": 309
+        },
+        "after": "fixed_slot_folder",
+        "timeout_seconds": 30
+      }
+    ],
+    "notes": [
+      "Requires parent Clips after previous export; exact path guard rejects an unexpected remembered subfolder.",
+      "DatasetQueue was indexed by the operator after one native replay-root refresh; this plan does not refresh.",
+      "Every repeated same-path import must be checked by exact native scene readback."
+    ],
+    "verification": "Unvalidated coordinate blueprint. Replace captures with your own and review every action before enabling execution."
+  },
+  "import.json": {
+    "version": 1,
+    "size": [
+      1920,
+      1080
+    ],
+    "states": {
+      "editor_ready": {
+        "regions": [
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              375,
+              803,
+              135,
+              38
+            ]
+          },
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              410,
+              1028,
+              95,
+              38
+            ]
+          }
+        ]
+      },
+      "fixed_slot_folder": {
+        "regions": [
+          {
+            "image": "captures/queue_folder.png",
+            "rect": [
+              850,
+              116,
+              222,
+              32
+            ]
+          },
+          {
+            "image": "captures/queue_folder.png",
+            "rect": [
+              748,
+              201,
+              340,
+              28
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/queue_folder.png",
+            "rect": [
+              739,
+              260,
+              240,
+              28
+            ],
+            "match_mode": "white_text",
+            "max_text_mask_error": 0.06
+          }
+        ]
+      },
+      "fixed_slot_selected": {
+        "regions": [
+          {
+            "image": "captures/queue_folder.png",
+            "rect": [
+              850,
+              116,
+              222,
+              32
+            ]
+          },
+          {
+            "image": "captures/queue_folder.png",
+            "rect": [
+              748,
+              201,
+              340,
+              28
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/queue_folder.png",
+            "rect": [
+              739,
+              260,
+              240,
+              28
+            ],
+            "match_mode": "white_text",
+            "max_text_mask_error": 0.06
+          },
+          {
+            "image": "captures/slot_selected.png",
+            "rect": [
+              800,
+              783,
+              300,
+              30
+            ],
+            "match_mode": "white_text",
+            "max_text_mask_error": 0.06
+          }
+        ]
+      }
+    },
+    "steps": [
+      {
+        "before": "fixed_slot_folder",
+        "action": {
+          "kind": "click",
+          "x": 950,
+          "y": 273
+        },
+        "after": "fixed_slot_selected",
+        "timeout_seconds": 30
+      },
+      {
+        "before": "fixed_slot_selected",
+        "action": {
+          "kind": "click",
+          "x": 960,
+          "y": 858
+        },
+        "after": "editor_ready",
+        "timeout_seconds": 120
+      }
+    ],
+    "notes": [
+      "Exact fixed filename DatasetSlot.Clip.Gbx; job identity comes from source hashes and readback, not this name."
+    ],
+    "verification": "Unvalidated coordinate blueprint. Replace captures with your own and review every action before enabling execution."
+  },
+  "export.json": {
+    "version": 1,
+    "size": [
+      1920,
+      1080
+    ],
+    "states": {
+      "editor_ready": {
+        "regions": [
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              375,
+              803,
+              135,
+              38
+            ]
+          },
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              410,
+              1028,
+              95,
+              38
+            ]
+          }
+        ]
+      },
+      "fixed_export_dialog": {
+        "regions": [
+          {
+            "image": "captures/export_dialog.png",
+            "rect": [
+              850,
+              116,
+              222,
+              32
+            ]
+          },
+          {
+            "image": "captures/export_dialog.png",
+            "rect": [
+              748,
+              201,
+              340,
+              28
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/export_dialog.png",
+            "rect": [
+              939,
+              849,
+              43,
+              19
+            ]
+          }
+        ]
+      },
+      "fixed_export_named": {
+        "regions": [
+          {
+            "image": "captures/export_dialog.png",
+            "rect": [
+              850,
+              116,
+              222,
+              32
+            ]
+          },
+          {
+            "image": "captures/export_dialog.png",
+            "rect": [
+              748,
+              201,
+              340,
+              28
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/export_dialog.png",
+            "rect": [
+              939,
+              849,
+              43,
+              19
+            ]
+          },
+          {
+            "image": "captures/readback_named.png",
+            "rect": [
+              840,
+              785,
+              219,
+              30
+            ],
+            "match_mode": "white_text",
+            "max_text_mask_error": 0.06
+          }
+        ]
+      }
+    },
+    "steps": [
+      {
+        "before": "editor_ready",
+        "action": {
+          "kind": "click",
+          "x": 320,
+          "y": 1048
+        },
+        "after": "fixed_export_dialog",
+        "timeout_seconds": 30
+      },
+      {
+        "before": "fixed_export_dialog",
+        "action": {
+          "kind": "click",
+          "x": 950,
+          "y": 799
+        },
+        "after": "fixed_export_dialog",
+        "timeout_seconds": 30
+      },
+      {
+        "before": "fixed_export_dialog",
+        "action": {
+          "kind": "key",
+          "key": "ctrl+a"
+        },
+        "after": "fixed_export_dialog",
+        "timeout_seconds": 30
+      },
+      {
+        "before": "fixed_export_dialog",
+        "action": {
+          "kind": "type",
+          "purpose": "filename",
+          "text": "DatasetReadback"
+        },
+        "after": "fixed_export_named",
+        "timeout_seconds": 30
+      },
+      {
+        "before": "fixed_export_named",
+        "action": {
+          "kind": "click",
+          "x": 960,
+          "y": 858
+        },
+        "after": "editor_ready",
+        "timeout_seconds": 30
+      }
+    ],
+    "notes": [
+      "Exact new output Replays/Clips/DatasetReadback.Clip.Gbx must be absent before the job.",
+      "Actual centered full basename, parent path, heading and Save are guarded. Archive and decode before rendering."
+    ],
+    "verification": "Unvalidated coordinate blueprint. Replace captures with your own and review every action before enabling execution."
+  },
+  "prepare.json": {
+    "version": 1,
+    "size": [
+      1920,
+      1080
+    ],
+    "states": {
+      "editor_at_zero": {
+        "regions": [
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              375,
+              803,
+              135,
+              38
+            ]
+          },
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              410,
+              1028,
+              95,
+              38
+            ]
+          },
+          {
+            "image": "captures/editor_zero.png",
+            "rect": [
+              628,
+              807,
+              115,
+              31
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          }
+        ]
+      },
+      "editor_ready": {
+        "regions": [
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              375,
+              803,
+              135,
+              38
+            ]
+          },
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              410,
+              1028,
+              95,
+              38
+            ]
+          }
+        ]
+      },
+      "shoot_basic": {
+        "regions": [
+          {
+            "image": "captures/shoot_named.png",
+            "rect": [
+              791,
+              215,
+              345,
+              31
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_named.png",
+            "rect": [
+              837,
+              394,
+              55,
+              51
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_named.png",
+            "rect": [
+              837,
+              455,
+              39,
+              26
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          }
+        ]
+      },
+      "shoot_settings_verified": {
+        "regions": [
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              791,
+              215,
+              345,
+              31
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              837,
+              394,
+              55,
+              51
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              837,
+              455,
+              39,
+              26
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              837,
+              490,
+              75,
+              28
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1654,
+              250,
+              40,
+              26
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1655,
+              298,
+              30,
+              52
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1654,
+              383,
+              70,
+              27
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1656,
+              362,
+              24,
+              24
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1656,
+              409,
+              24,
+              24
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1656,
+              463,
+              24,
+              24
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1656,
+              553,
+              24,
+              70
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1654,
+              731,
+              43,
+              27
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1654,
+              802,
+              40,
+              27
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          }
+        ]
+      },
+      "shoot_typed_dataset_prefix": {
+        "regions": [
+          {
+            "image": "captures/shoot_named.png",
+            "rect": [
+              791,
+              215,
+              345,
+              31
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_named.png",
+            "rect": [
+              840,
+              287,
+              78,
+              26
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          }
+        ]
+      }
+    },
+    "steps": [
+      {
+        "before": "editor_ready",
+        "action": {
+          "kind": "click",
+          "x": 444,
+          "y": 822
+        },
+        "after": "editor_at_zero",
+        "timeout_seconds": 30
+      },
+      {
+        "before": "editor_at_zero",
+        "action": {
+          "kind": "click",
+          "x": 426,
+          "y": 1048
+        },
+        "after": "shoot_basic",
+        "timeout_seconds": 30
+      },
+      {
+        "before": "shoot_basic",
+        "action": {
+          "kind": "click",
+          "x": 1060,
+          "y": 299
+        },
+        "after": "shoot_basic",
+        "timeout_seconds": 30
+      },
+      {
+        "before": "shoot_basic",
+        "action": {
+          "kind": "key",
+          "key": "ctrl+a"
+        },
+        "after": "shoot_basic",
+        "timeout_seconds": 30
+      },
+      {
+        "before": "shoot_basic",
+        "action": {
+          "kind": "type",
+          "purpose": "filename",
+          "text": "DatasetQueueVideo"
+        },
+        "after": "shoot_typed_dataset_prefix",
+        "timeout_seconds": 30
+      },
+      {
+        "before": "shoot_typed_dataset_prefix",
+        "action": {
+          "kind": "click",
+          "x": 1162,
+          "y": 456
+        },
+        "after": "shoot_settings_verified",
+        "timeout_seconds": 30
+      }
+    ],
+    "notes": [
+      "Does not change numeric/render settings. Stops unless the reviewed values already match.",
+      "No depth-of-field control is visible in evidence; its value is unknown.",
+      "Intended shoot basename: DatasetQueueVideo; use a new name and validate output independently."
+    ],
+    "verification": "Unvalidated coordinate blueprint. Replace captures with your own and review every action before enabling execution."
+  },
+  "render.json": {
+    "version": 1,
+    "size": [
+      1920,
+      1080
+    ],
+    "states": {
+      "editor_ready": {
+        "regions": [
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              375,
+              803,
+              135,
+              38
+            ]
+          },
+          {
+            "image": "captures/editor_ready.png",
+            "rect": [
+              410,
+              1028,
+              95,
+              38
+            ]
+          }
+        ]
+      },
+      "shoot_settings_verified": {
+        "regions": [
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              791,
+              215,
+              345,
+              31
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              837,
+              394,
+              55,
+              51
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              837,
+              455,
+              39,
+              26
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              837,
+              490,
+              75,
+              28
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1654,
+              250,
+              40,
+              26
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1655,
+              298,
+              30,
+              52
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1654,
+              383,
+              70,
+              27
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1656,
+              362,
+              24,
+              24
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1656,
+              409,
+              24,
+              24
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1656,
+              463,
+              24,
+              24
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1656,
+              553,
+              24,
+              70
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1654,
+              731,
+              43,
+              27
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          },
+          {
+            "image": "captures/shoot_settings.png",
+            "rect": [
+              1654,
+              802,
+              40,
+              27
+            ],
+            "max_mean_error": 14.0,
+            "max_changed_fraction": 0.015,
+            "pixel_tolerance": 16
+          }
+        ]
+      }
+    },
+    "steps": [
+      {
+        "before": "shoot_settings_verified",
+        "action": {
+          "kind": "click",
+          "x": 827,
+          "y": 851
+        },
+        "after": "editor_ready",
+        "timeout_seconds": 120
+      }
+    ],
+    "notes": [
+      "Starts rendering from reviewed visible settings. Caller must also have verified intended clip/readback and unique output name.",
+      "Editor return is not evidence of successful output. Require new expected video, ffprobe, decoded frame count, and timing checks.",
+      "On timeout, do not repeat OK. Use poll-editor-ready.json and inspect the expected output while rendering continues."
+    ],
+    "verification": "Unvalidated coordinate blueprint. Replace captures with your own and review every action before enabling execution."
+  }
+}

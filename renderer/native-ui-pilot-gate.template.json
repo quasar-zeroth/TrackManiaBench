@@ -1,0 +1,70 @@
+{
+  "passed": false,
+  "verified_by": null,
+  "verified_utc": null,
+  "evidence_files": [],
+  "map_sha256": null,
+  "settings": {
+    "width": 640,
+    "height": 360,
+    "fps": 50,
+    "gamecam": 2,
+    "entity": 1,
+    "container": "webm",
+    "audio": false,
+    "native_full_clip": true,
+    "hud3d": false,
+    "motion_blur": null,
+    "dof": null,
+    "remanence": 0,
+    "sharpen": false,
+    "stereo3d": false,
+    "tile_split": null,
+    "antialias": 4,
+    "persistence_duration_seconds": 0,
+    "quality_preset": "low",
+    "fx_tracks": false
+  },
+  "plugin_build": null,
+  "checks": {
+    "correct_single_ghost": {
+      "passed": false,
+      "evidence": null
+    },
+    "fixed_camera_whole_run": {
+      "passed": false,
+      "evidence": null
+    },
+    "no_hud": {
+      "passed": false,
+      "evidence": null
+    },
+    "frame_race_clock_alignment": {
+      "passed": false,
+      "evidence": null
+    },
+    "finish_covered": {
+      "passed": false,
+      "evidence": null
+    },
+    "repeat_render_consistency": {
+      "passed": false,
+      "evidence": null
+    },
+    "resume_preserves_outputs": {
+      "passed": false,
+      "evidence": null
+    },
+    "action_decode_complete": {
+      "passed": false,
+      "evidence": null
+    },
+    "render_effect_controls_documented": {
+      "passed": false,
+      "evidence": "Actual settings screenshot + serialized no-FX clip; persistence0/Low/AA4x recorded, DOF/motion_blur/tile_split remain unexposed and unknown."
+    }
+  },
+  "pilot_runs": [],
+  "renderer_backend": "native_ui",
+  "renderer_build": "native-ui-0.2.0"
+}
