@@ -2,8 +2,8 @@
 
 This requires a separately provisioned, compatible TICK server. Installing the
 Python client does not install that server, modify Trackmania, or provide a
-rendering API. Server availability and operation under Proton have not been
-verified by this project. No failure switches this backend to wall-clock play.
+rendering API. The native Linux TICK 3.0.1 optimizer has been validated with a
+Steam/Proton game's resources. No failure switches to wall-clock play.
 """
 
 from __future__ import annotations
@@ -50,8 +50,8 @@ class TickGymBackend:
     Reset is at tick -1 and consumes no controller step.
 
     Samples have no image: tickgym 1.1.0 does not expose RGB rendering. This
-    adapter is implemented against that client's public API, with offline
-    protocol tests; it has not been validated against a running TICK server.
+    adapter is implemented against that client's public API and validated with
+    the native Linux TICK 3.0.1 optimizer, including finish and reset episodes.
     Methods must be called serially by a single owner.
     """
 

@@ -8,6 +8,7 @@ import struct
 import subprocess
 import threading
 import time
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -66,6 +67,7 @@ class FakeInput:
     def __init__(self):
         self.releases = 0
         self.resets = 0
+        self.finish_dismissals = 0
         self.actions = []
         self.fail = False
         self.closed = False
@@ -75,6 +77,9 @@ class FakeInput:
 
     def reset(self):
         self.resets += 1
+
+    def dismiss_finish_popup(self):
+        self.finish_dismissals += 1
 
     def apply(self, action):
         self.actions.append(action)
@@ -215,6 +220,8 @@ class BackendTests(unittest.TestCase):
             capture=self.capture,
             expected_start_position=(10, 20, 30),
             reset_stable_samples=2,
+            reset_settle_seconds=0,
+            finish_popup_delay_seconds=0,
             timeout=0.3,
         )
         opts.update(kwargs)
@@ -266,6 +273,107 @@ class BackendTests(unittest.TestCase):
         self.assertGreaterEqual(self.input.releases, 2)
         with self.assertRaises(ControlError):
             backend.apply_action(Action(throttle=1))
+
+    def test_reset_waits_for_countdown_and_requires_post_settle_packets(self):
+        backend = self.make_backend(reset_settle_seconds=0.03)
+        before = time.monotonic_ns()
+        sample = backend.reset()
+        barrier = sample.metadata["reset_ready_after_ns"]
+        self.assertGreaterEqual(barrier - before, 30_000_000)
+        self.assertTrue(all(c["min_received_ns"] == barrier for c in self.source.read_calls))
+        self.assertGreaterEqual(sample.metadata["telemetry_received_ns"], barrier)
+        self.assertFalse(sample.metadata["race_ready_verified"])
+        self.assertFalse(sample.metadata["race_clock_reset_verified"])
+        self.assertEqual(sample.metadata["reset_binding"], "custom")
+        self.assertFalse(sample.metadata["finish_popup_dismissed"])
+        self.assertEqual(self.input.finish_dismissals, 0)
+
+    def test_packets_from_during_countdown_do_not_verify_reset(self):
+        client, server = socket.socketpair()
+        source = TMRLTelemetrySource(timeout=0.05, sock=client)
+        self.addCleanup(server.close)
+        backend = self.make_backend(
+            telemetry=source, reset_settle_seconds=0.03, timeout=0.05, reset_timeout=0.05
+        )
+        server.sendall(struct.pack("<11f", *values()))
+        source.read()
+        with self.assertRaisesRegex(TelemetryError, "fresh"):
+            backend.reset()
+        self.assertFalse(backend._reset_verified)
+        self.assertGreaterEqual(self.input.releases, 2)
+
+    def test_finished_episode_confirms_popup_only_after_restart(self):
+        backend = self.make_backend(finish_popup_delay_seconds=0.02, reset_settle_seconds=0.02)
+        backend.reset()
+        self.source.rows.append(values(finished=1))
+        self.assertTrue(backend.observe().telemetry.finished)
+        events = []
+        self.input.reset = lambda: events.append(("reset", time.monotonic_ns()))
+        self.input.dismiss_finish_popup = lambda: events.append(("dismiss", time.monotonic_ns()))
+        sample = backend.reset()
+        self.assertEqual([event[0] for event in events], ["reset", "dismiss"])
+        self.assertGreaterEqual(events[1][1] - events[0][1], 20_000_000)
+        self.assertGreaterEqual(sample.metadata["reset_ready_after_ns"] - events[1][1], 20_000_000)
+        self.assertTrue(sample.metadata["finish_popup_dismissed"])
+        self.assertFalse(sample.telemetry.finished)
+        events.clear()
+        backend.reset()
+        self.assertEqual([event[0] for event in events], ["reset"])
+
+    def test_receiver_finish_latch_is_used_even_without_policy_observation(self):
+        class LatchedSource(FakeTelemetry):
+            last_finish_sequence = 0
+
+            def read(self, **kwargs):
+                packet = super().read(**kwargs)
+                return TelemetryPacket(
+                    packet.values, packet.received_ns, packet.sequence, self.last_finish_sequence
+                )
+
+        source = LatchedSource()
+        backend = self.make_backend(telemetry=source)
+        backend.reset()
+        source.last_finish_sequence = 3
+        backend.reset()
+        self.assertEqual(self.input.finish_dismissals, 1)
+        backend.reset()
+        self.assertEqual(self.input.finish_dismissals, 1)
+
+    def test_custom_input_without_popup_hook_fails_explicitly_only_after_finish(self):
+        backend = self.make_backend()
+        self.input.dismiss_finish_popup = None
+        backend.reset()
+        self.source.rows.append(values(finished=1))
+        backend.observe()
+        with self.assertRaisesRegex(ControlError, "cannot dismiss"):
+            backend.reset()
+        self.assertFalse(backend._reset_verified)
+        self.assertEqual(self.input.resets, 1)
+        self.assertIsNotNone(backend._fault)
+
+    def test_finish_confirmation_failure_releases_controls_and_blocks_actions(self):
+        backend = self.make_backend()
+        backend.reset()
+        self.source.rows.append(values(finished=1))
+        backend.observe()
+
+        def broken_confirmation():
+            raise ControlError("confirmation failed")
+
+        self.input.dismiss_finish_popup = broken_confirmation
+        previous_releases = self.input.releases
+        with self.assertRaisesRegex(ControlError, "confirmation failed"):
+            backend.reset()
+        self.assertGreaterEqual(self.input.releases, previous_releases + 2)
+        self.assertFalse(backend._reset_verified)
+        with self.assertRaises(ControlError):
+            backend.apply_action(Action(throttle=1))
+
+    def test_reset_delays_must_be_finite_nonnegative(self):
+        for name in ("reset_settle_seconds", "finish_popup_delay_seconds", "gamepad_connect_settle_seconds"):
+            for value in (-1, float("nan"), float("inf")):
+                with self.subTest(name=name, value=value), self.assertRaisesRegex(ValueError, name):
+                    self.make_backend(**{name: value})
 
     def test_reset_cannot_complete_at_wrong_position(self):
         class WrongStart(FakeTelemetry):
@@ -440,6 +548,14 @@ class BackendTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "capture_region"):
             TMRLBackend(input_device=FakeInput(), telemetry_source=FakeTelemetry())
 
+    def test_configured_reset_bindings_reach_default_input_constructors(self):
+        with patch("trackmaniabench.live.tmrl.GamepadController", return_value=FakeInput()) as constructor:
+            self.make_backend(input_device=None, reset_button=0x8000, gamepad_connect_settle_seconds=3.0)
+            constructor.assert_called_once_with(reset_button=0x8000, connect_settle_seconds=3.0)
+        with patch("trackmaniabench.live.tmrl.KeyboardController", return_value=FakeInput()) as constructor:
+            self.make_backend(input_device=None, control="keyboard", window_id=123, reset_key="F8")
+            constructor.assert_called_once_with(123, class_pattern="Trackmania", display=None, reset_key="F8")
+
 
 class FakePad:
     def __init__(self):
@@ -457,6 +573,42 @@ class FakePad:
 
 
 class InputTests(unittest.TestCase):
+    def test_new_gamepad_waits_for_discovery_before_first_report(self):
+        for options, expected_wait in (({}, 2.0), ({"connect_settle_seconds": 3.0}, 3.0)):
+            with self.subTest(options=options):
+                pad = FakePad()
+
+                def sleep(seconds):
+                    self.assertFalse(pad.calls, "A report was sent before discovery settled")
+                    pad.calls.append(("sleep", (seconds,), {}))
+
+                with patch.dict("sys.modules", {"vgamepad": SimpleNamespace(VX360Gamepad=lambda: pad)}):
+                    control = GamepadController(sleep=sleep, **options)
+                self.assertEqual(pad.calls, [("sleep", (expected_wait,), {}), ("reset", (), {}), ("update", (), {})])
+                control.close()
+
+    def test_injected_gamepad_does_not_repeat_connection_wait(self):
+        with patch("time.sleep") as sleep:
+            control = GamepadController(gamepad=FakePad(), sleep=sleep)
+        sleep.assert_not_called()
+        control.close()
+
+    def test_interrupted_gamepad_discovery_neutralizes_device(self):
+        pad = FakePad()
+
+        def interrupt(_):
+            raise KeyboardInterrupt
+
+        with patch.dict("sys.modules", {"vgamepad": SimpleNamespace(VX360Gamepad=lambda: pad)}):
+            with self.assertRaises(KeyboardInterrupt):
+                GamepadController(sleep=interrupt)
+        self.assertEqual([call[0] for call in pad.calls], ["reset", "update"])
+
+    def test_gamepad_connection_delay_must_be_finite_nonnegative(self):
+        for value in (-1, float("nan"), float("inf")):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "connect_settle_seconds"):
+                GamepadController(connect_settle_seconds=value, gamepad=FakePad())
+
     def test_gamepad_reports_actual_integer_quantization_and_b_reset(self):
         pad = FakePad()
         control = GamepadController(gamepad=pad, sleep=lambda _: None)
@@ -479,7 +631,29 @@ class InputTests(unittest.TestCase):
         self.assertEqual(names.count("right_trigger"), 1)
         self.assertEqual(names[-2:], ["reset", "update"])
 
-    def make_keyboard(self):
+    def test_gamepad_finish_confirmation_uses_a_and_always_neutralizes(self):
+        pad = FakePad()
+        control = GamepadController(gamepad=pad, sleep=lambda _: None)
+        control.dismiss_finish_popup()
+        self.assertIn(("press_button", (), {"button": 0x1000}), pad.calls)
+        self.assertIn(("release_button", (), {"button": 0x1000}), pad.calls)
+        self.assertNotIn(("press_button", (), {"button": 0x2000}), pad.calls)
+        self.assertEqual([call[0] for call in pad.calls[-2:]], ["reset", "update"])
+
+    def test_gamepad_reset_binding_can_follow_installation_configuration(self):
+        pad = FakePad()
+        control = GamepadController(reset_button=0x8000, gamepad=pad, sleep=lambda _: None)
+        control.reset()
+        self.assertIn(("press_button", (), {"button": 0x8000}), pad.calls)
+        self.assertNotIn(("press_button", (), {"button": 0x2000}), pad.calls)
+        self.assertEqual(control.reset_binding, "xbox-button:0x8000")
+
+    def test_gamepad_reset_button_rejects_invalid_or_combined_masks(self):
+        for value in (True, 0, -1, 0x3000, 0x10000, "B", 8192.0):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "reset_button"):
+                GamepadController(reset_button=value, gamepad=FakePad())
+
+    def make_keyboard(self, **kwargs):
         calls = []
         state = {"focused": "123", "fail_key": None}
 
@@ -494,7 +668,7 @@ class InputTests(unittest.TestCase):
                 raise subprocess.CalledProcessError(1, argv)
             return subprocess.CompletedProcess(argv, 0, "")
 
-        control = KeyboardController(123, runner=run, sleep=lambda _: None)
+        control = KeyboardController(123, runner=run, sleep=lambda _: None, **kwargs)
         return control, calls, state
 
     def test_keyboard_quantizes_and_checks_focus(self):
@@ -516,13 +690,29 @@ class InputTests(unittest.TestCase):
             control.apply(Action(throttle=1))
         self.assertEqual(calls.count(["xdotool", "keydown", "Up"]), 1)
         released = {c[-1] for c in calls[-5:]}
-        self.assertEqual(released, {"Up", "Down", "Left", "Right", "BackSpace"})
+        self.assertEqual(released, {"Up", "Down", "Left", "Right", "Delete"})
 
-    def test_keyboard_reset_uses_backspace(self):
+    def test_keyboard_reset_uses_give_up_delete_not_checkpoint_backspace(self):
         control, calls, _ = self.make_keyboard()
         control.reset()
-        self.assertIn(["xdotool", "keydown", "BackSpace"], calls)
-        self.assertIn(["xdotool", "keyup", "BackSpace"], calls)
+        self.assertIn(["xdotool", "keydown", "Delete"], calls)
+        self.assertIn(["xdotool", "keyup", "Delete"], calls)
+        self.assertFalse(any(c[-1] == "BackSpace" for c in calls))
+        self.assertEqual(control.reset_binding, "keyboard:Delete")
+
+    def test_keyboard_reset_binding_is_configurable_and_released_after_failure(self):
+        control, calls, state = self.make_keyboard(reset_key="F8")
+        state["fail_key"] = "F8"
+        with self.assertRaisesRegex(ControlError, "reset failed"):
+            control.reset()
+        self.assertIn(["xdotool", "keydown", "F8"], calls)
+        self.assertIn(["xdotool", "keyup", "F8"], calls[-5:])
+        self.assertEqual(control.reset_binding, "keyboard:F8")
+
+    def test_keyboard_reset_binding_cannot_inject_xdotool_arguments(self):
+        for value in (None, "", "--window", "ctrl+Delete", "Delete key", "Delete;touch", 42):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "reset_key"):
+                self.make_keyboard(reset_key=value)
 
     def test_window_id_cannot_inject_options(self):
         for value in ("--sync", "12; touch pwn", "0", True):

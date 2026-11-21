@@ -4,9 +4,9 @@ Build Trackmania 2020 datasets from leaderboard replays: **native third-person c
 
 This project reorganizes the pipeline used to produce a verified 250-run dataset for **Summer 2020 – 01**. It includes the actual native Replay Editor workflow, source decoding, quality checks, frame/action joining, and portable release verification. Map UID, cohort size, paths, remote machine, and dataset splits are configurable.
 
-The project supports offline dataset generation for world models and autoregressive models, plus a **Python live-control API compatible with Elemental's RL environment interface**. Realtime control uses the running game's clock and third-person screen capture. An optional tickgym backend supports acknowledged simulation steps through a separately provisioned TICK server; that backend is telemetry-only and has not been validated under Proton. See [the live RL guide](docs/live-rl.md) for setup and timing limits.
+The project supports offline dataset generation for world models and autoregressive models, plus a **Python live-control API compatible with Elemental's RL environment interface**. Realtime control uses the running game's clock and third-person screen capture. An optional tickgym backend supports acknowledged simulation steps through a separately provisioned native TICK server. See [the live RL guide](docs/live-rl.md) for setup and timing limits.
 
-The live API is experimental. Its automated Elemental integration passes, but the first Ubuntu desktop test was blocked at the game's pre-race menu; successful driving and terminal reset are not yet established. See [the live validation record](docs/live-validation.md) before using it for training.
+The live API has been exercised on Ubuntu with an RTX 3090: real-time controls, chase-camera RGB, inference-delay behavior and native TICK simulation all work. Elemental's actual PPO collector also collected live rollouts in both modes. Controller-paced mode currently provides telemetry only. See [the validation record](docs/live-validation.md) and [TICK setup guide](docs/tickgym-setup.md) for the tested scope and remaining limitations.
 
 ## What it produces
 

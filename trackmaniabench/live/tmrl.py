@@ -99,6 +99,12 @@ class TMRLTelemetrySource:
         with self._condition:
             return None if self._latest is None else self._latest.received_ns
 
+    @property
+    def last_finish_sequence(self):
+        """Last observed finish, including packets superseded before a read."""
+        with self._condition:
+            return self._finish_sequence
+
     def _receive(self):
         pending = bytearray()
         try:
@@ -253,9 +259,14 @@ class TMRLBackend:
         start_position_tolerance=2.0,
         start_speed_threshold=1.0,
         reset_stable_samples=3,
+        reset_settle_seconds=1.5,
+        finish_popup_delay_seconds=0.5,
         action_lease_seconds=10.0,
         window_id=None,
         class_pattern="Trackmania",
+        reset_key="Delete",
+        reset_button=0x2000,
+        gamepad_connect_settle_seconds=2.0,
         telemetry_source=None,
         input_device=None,
         capture=None,
@@ -270,6 +281,13 @@ class TMRLBackend:
                 raise ValueError(f"{name} must be finite and positive")
         if not math.isfinite(start_speed_threshold) or start_speed_threshold < 0:
             raise ValueError("start_speed_threshold must be finite and non-negative")
+        for name, value in (
+            ("reset_settle_seconds", reset_settle_seconds),
+            ("finish_popup_delay_seconds", finish_popup_delay_seconds),
+            ("gamepad_connect_settle_seconds", gamepad_connect_settle_seconds),
+        ):
+            if not math.isfinite(value) or value < 0:
+                raise ValueError(f"{name} must be finite and non-negative")
         if (
             isinstance(reset_stable_samples, bool)
             or not isinstance(reset_stable_samples, int)
@@ -293,6 +311,8 @@ class TMRLBackend:
         self._position_tolerance = start_position_tolerance
         self._speed_threshold = start_speed_threshold
         self._stable_samples = reset_stable_samples
+        self._reset_settle_seconds = float(reset_settle_seconds)
+        self._finish_popup_delay_seconds = float(finish_popup_delay_seconds)
         self._lease_seconds = float(action_lease_seconds)
         self._control_lock = threading.RLock()
         self._observation_lock = threading.Lock()
@@ -307,6 +327,9 @@ class TMRLBackend:
         self._action_sequence = 0
         self._last_observed_sequence = 0
         self._reset_finish_sequence = 0
+        self._finish_observed = False
+        self._reset_ready_after_ns = None
+        self._finish_popup_dismissed = False
         self._seed_requested = None
         self._reset_verified = False
         self._telemetry = None
@@ -320,9 +343,13 @@ class TMRLBackend:
                 input_device
                 if input_device is not None
                 else (
-                    GamepadController()
+                    GamepadController(
+                        reset_button=reset_button, connect_settle_seconds=gamepad_connect_settle_seconds
+                    )
                     if control == "gamepad"
-                    else KeyboardController(window_id, class_pattern=class_pattern, display=display)
+                    else KeyboardController(
+                        window_id, class_pattern=class_pattern, display=display, reset_key=reset_key
+                    )
                 )
             )
             self._telemetry = (
@@ -455,6 +482,12 @@ class TMRLBackend:
                 "transition_valid": self._fault is None and self._reset_verified,
                 "reset_verified": self._reset_verified,
                 "reset_verification": "start_pose_low_speed_unfinished",
+                "reset_binding": getattr(self._input, "reset_binding", "custom"),
+                "race_clock_reset_verified": False,
+                "reset_settle_seconds": self._reset_settle_seconds,
+                "reset_ready_after_ns": self._reset_ready_after_ns,
+                "finish_popup_dismissed": self._finish_popup_dismissed,
+                "race_ready_verified": False,
                 "seed_requested": self._seed_requested,
                 "seed_applied": False,
                 "map_identity_available": False,
@@ -462,6 +495,9 @@ class TMRLBackend:
         telemetry = packet.as_telemetry()
         if packet.finish_sequence > self._reset_finish_sequence:
             telemetry = replace(telemetry, finished=True)
+        if telemetry.finished:
+            with self._control_lock:
+                self._finish_observed = True
         metadata["finish_event_latched"] = telemetry.finished and not bool(packet.values[8])
         return Sample(telemetry, capture_ended_ns, packet.sequence, image, metadata)
 
@@ -494,24 +530,51 @@ class TMRLBackend:
                 self._lease_deadline_ns = None
                 self._seed_requested = seed
                 self._last_action = Action()
+                self._reset_ready_after_ns = None
+                self._finish_popup_dismissed = False
+                finish_observed = self._finish_observed or (
+                    getattr(self._telemetry, "last_finish_sequence", 0) > self._reset_finish_sequence
+                )
                 try:
                     self._input.release()
+                    if finish_observed and not callable(
+                        getattr(self._input, "dismiss_finish_popup", None)
+                    ):
+                        raise ControlError(
+                            "A finish was observed but this input device cannot dismiss its popup. "
+                            "Provide input_device.dismiss_finish_popup(), or close the popup "
+                            "manually and create a new backend."
+                        )
                     self._input.reset()
                 except Exception:
                     self._neutralize("reset_input_failed")
                     raise
-                reset_sent_ns = time.monotonic_ns()
-                after = self._telemetry.last_sequence
-            deadline = time.monotonic() + self.reset_timeout
-            stable = 0
             try:
+                if finish_observed:
+                    if self._stop.wait(self._finish_popup_delay_seconds):
+                        raise ControlError("Backend closed during finish-popup reset")
+                    with self._control_lock:
+                        self._check_open()
+                        self._input.dismiss_finish_popup()
+                        self._finish_popup_dismissed = True
+                # Starting pose alone can match during countdown or behind a
+                # menu. Wait for the configured countdown interval, then demand
+                # new packets. This does not claim to identify menu/race state.
+                if self._stop.wait(self._reset_settle_seconds):
+                    raise ControlError("Backend closed while waiting for reset to settle")
+                with self._control_lock:
+                    self._check_open()
+                    self._reset_ready_after_ns = time.monotonic_ns()
+                    after = self._telemetry.last_sequence
+                deadline = time.monotonic() + self.reset_timeout
+                stable = 0
                 while True:
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
                         raise TelemetryError("Reset was not verified near the configured starting position")
                     packet = self._telemetry.read(
                         after_sequence=after,
-                        min_received_ns=reset_sent_ns,
+                        min_received_ns=self._reset_ready_after_ns,
                         timeout=min(self.timeout, remaining),
                     )
                     after = packet.sequence
@@ -531,6 +594,7 @@ class TMRLBackend:
                     self._release_error = None
                     self._reset_verified = True
                     self._reset_finish_sequence = packet.finish_sequence
+                    self._finish_observed = False
                 sample = self._sample(packet)
                 self._last_observed_sequence = packet.sequence
                 return sample

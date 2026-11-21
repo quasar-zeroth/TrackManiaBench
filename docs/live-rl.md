@@ -8,7 +8,7 @@ TrackManiaBench exposes a framework-independent Python environment and an option
 
 **Lockstep** uses the optional `tickgym==1.1.0` client and a separately provisioned TICK 3.0 server. A decision advances an acknowledged integer number of 10 ms simulation ticks, regardless of inference latency. For example, 20 Hz means five ticks per decision. Frequencies such as 60 Hz do not divide the simulation tick and are rejected rather than silently rounded. Early finishes report their actual tick duration.
 
-The tickgym Python client exists for this Trackmania edition. However, its TICK server must be installed independently; this project has not validated that server under Ubuntu/Proton. The publisher's linked server repository was unavailable during implementation. Installing the Python extra alone does not enable stepping. The client exposes telemetry and optional lidar, **not a rendering API**. This backend therefore returns no RGB image. Pairing an unrelated game screenshot with a headless simulation tick would not produce a synchronized observation.
+The native Linux TICK 3.0.1 optimizer has been validated with a Steam/Proton installation: exact ticks, pauses without simulation progress, repeatability, a complete race and reset all passed. See [installation and live verification](tickgym-setup.md). The server must be installed independently; installing the Python extra alone does not enable stepping. The client exposes telemetry and optional lidar, **not a rendering API**. This backend therefore returns no RGB image. Pairing an unrelated game screenshot with a headless simulation tick would not produce a synchronized observation.
 
 The normal-game backend does not advertise lockstep. FPS limiting, longer sleeps, process suspension and menu pauses are not substitutes for acknowledged simulation steps.
 
@@ -25,9 +25,15 @@ The installer downloads only the unchanged, hash-pinned signed `TMRL_GrabData.op
 
 Use an unlocked X11 session with Trackmania active, a local single-player map and the desired third-person gameplay camera. Establish the screen region of the game content. A gamepad needs access to `/dev/uinput` and the system libevdev library; the library does not change device permissions or invoke sudo. Keyboard mode needs xdotool and a verified focused Trackmania window. Configure these prerequisites for the desktop user running the game. See the upstream [Linux setup guide](https://github.com/trackmania-rl/tmrl/blob/master/readme/install_linux.md).
 
+New virtual gamepads wait two seconds for Steam/game discovery before the first input report. Configure `gamepad_connect_settle_seconds` on `TMRLBackend`, or `connect_settle_seconds` on `GamepadController`, if the installation needs a different delay. An injected, already-connected pad skips this wait. An immediate reset on a newly created device was ignored during live validation; a start-position check can still pass if the car was already at the start.
+
 Manually restart the chosen map at its starting line and record the telemetry position as `expected_start_position`. This map-specific anchor is required: a key press and a delay alone cannot establish that a reset worked. Reset verification requires fresh telemetry, proximity to that anchor, low speed and no finish flag. This is a start-state check, not cryptographic map identity; the plugin supplies no map UID. Reset bindings and countdown behavior must be verified once for the installation.
 
+Reset must use the game's **Give Up** binding, which restarts the race clock, rather than checkpoint respawn. The defaults are gamepad B (`reset_button=0x2000`, or `8192` in JSON) and keyboard Delete (`reset_key="Delete"`); both are configurable on `TMRLBackend` and their controller classes. BackSpace is checkpoint respawn on the tested installation. The backend waits `reset_settle_seconds=1.5`, then verifies fresh start-position samples. An observed finish additionally triggers gamepad A confirmation after `finish_popup_delay_seconds=0.5`; custom input devices must supply `dismiss_finish_popup()` for this case. The built-in keyboard controller has no verified finish-popup handler and rejects resets after a finish until a suitable handler is supplied. The reported `reset_binding` makes the configured input explicit, while `race_clock_reset_verified=False` reflects that GrabData cannot verify the clock itself. Confirm the visible countdown and restarted clock during installation testing.
+
 The same start pose can be reported behind a pre-race menu. GrabData exposes neither menu state nor readiness to accept controls, so pose verification alone cannot prove the race is playable. Inspect the captured frame and confirm movement plus reported inputs in a short pilot before collecting training data. Keep the virtual controller connected throughout setup and collection; changing input devices may change the game's active player/device state. Starter Access may block local maps: select a playable free campaign track or use an account with the required access.
+
+If the pre-race menu responds to mouse hover but ignores clicks, Enter and gamepad confirmation, the Ubisoft Connect overlay may still be capturing input. On our Ubuntu/Proton installation, pressing **Shift+F2 to open the Ubisoft overlay, then Shift+F2 to close it**, restored race entry with the same connected controller. Check visually that the overlay has closed, enter the race and rerun the [control checker](../examples/verify_live_controls.py) before collecting data. This is an observed recovery for this installation, not a universal diagnosis or an automatic library action. Ubisoft documents the [overlay shortcut and settings](https://www.ubisoft.com/en-us/help/article/000103536); a [Trackmania Proton report](https://github.com/ValveSoftware/Proton/issues/6507#issuecomment-3025504251) describes the same open/close recovery after input loss.
 
 While the car is stationary at that start, run `python examples/probe_live_telemetry.py --samples 5 --interval 0.2`. The [telemetry probe](../examples/probe_live_telemetry.py) only connects to the GrabData receiver; it creates no input controller, sends no controls and captures no desktop images. It prints fresh JSON records containing position, raw speed and host receipt timing. Confirm the repeated positions are stable, then use that XYZ triple as `expected_start_position`; the probe does not verify the map or choose an anchor automatically. Use `--host`, `--port` and `--timeout` when needed, and `--help` for all options. Receipt age is not a measurement of game-clock or producer latency.
 
@@ -58,7 +64,7 @@ The configurable action lease releases controls if the controller stops refreshi
 
 ## Controller-paced telemetry
 
-After separately provisioning a compatible TICK server:
+After [separately provisioning a compatible TICK server](tickgym-setup.md):
 
 ```python
 from trackmaniabench.live import LiveTrackManiaEnv
@@ -118,7 +124,7 @@ Read [the current validation record](live-validation.md). Automated API compatib
 
 Run `python scripts/check.py` for offline regressions. With Elemental's `src` on `PYTHONPATH` and Torch/Hydra available, run `python -m unittest discover -s tests -p test_live_elemental.py -v` to exercise the actual PPO collector, buffer, GAE and configuration instantiation. Missing optional dependencies are explicit skips, not successful integration claims.
 
-Before training on a game installation, verify reset position and countdown, accelerator/brake/steering signs and quantization, camera/crop, telemetry freshness, capture latency, watchdog release, disconnect behavior and terminal reset. Use a short controlled rollout before long training. Protocol tests for tickgym do not establish availability or behavior of a live TICK server.
+Before training on a game installation, verify reset position and countdown, accelerator/brake/steering signs and quantization, camera/crop, telemetry freshness, capture latency, watchdog release, disconnect behavior and terminal reset. Use a short controlled rollout before long training. The live checks below complement the offline protocol regressions.
 
 The [control checker](../examples/verify_live_controls.py) **drives the car** for four short phases, verifies movement and reported input signs, then resets. It creates the controller before an optional readiness prompt, emits a JSON report and exits nonzero on failure:
 
@@ -128,5 +134,16 @@ python examples/verify_live_controls.py \
 ```
 
 The JSON file supplies the same `TMRLBackend` arguments as the Python example above. A successful check still needs visual camera inspection and a complete finish/reset test; reported steering signs are corroboration, not a calibrated measurement of turning direction.
+
+The [real-time timing checker](../examples/verify_realtime_timing.py) then verifies movement with held controls during a simulated inference delay, action-history/timing attribution, action-lease expiry, neutral controls, rejection of the expired transition and reset recovery:
+
+```bash
+python examples/verify_realtime_timing.py \
+  --backend-options backend.local.json > realtime-timing.json
+```
+
+It deliberately uses a one-second lease and exits nonzero if any check fails. For controller-paced simulation, run [the lockstep verifier](../examples/verify_lockstep.py) with a known finishing input sequence as described in [the TICK setup guide](tickgym-setup.md).
+
+The [episode checker](../examples/verify_realtime_episodes.py) follows a supplied reference path to exercise actual finishes and repeated resets. Select `--adapter elemental` to test automatic resets. Its JSON reference contains `samples` with XYZ `position` and `velocity` vectors; no map or player recording is bundled. The simple controller needs tuning for the map, steering deadzone and observation latency. A time limit or failed reset is reported as failure, never a completed race. Use `--captures` to retain terminal and reset images for inspection.
 
 Primary sources: [TMRL telemetry/control source](https://github.com/trackmania-rl/tmrl/tree/master/tmrl/custom/tm), [signed-plugin confirmation](https://github.com/trackmania-rl/tmrl/discussions/104), [tickgym package and requirements](https://pypi.org/project/tickgym/1.1.0/), [tickgym stepping contract](https://tm.achepta.com/tickgym/api/gym.html).

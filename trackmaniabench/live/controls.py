@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import os
 import re
 import subprocess
@@ -19,13 +20,23 @@ class GamepadController:
 
     Linux requires permission to open /dev/uinput. Return values describe the
     actual quantized device report, not proof the game has consumed that report.
+    A newly created pad waits for game discovery before the first report.
+    Injected pads are assumed to be connected already and do not wait.
     """
 
     action_profile = "xbox:steer-int16,triggers-uint8"
 
-    def __init__(self, *, gamepad=None, sleep=time.sleep):
+    def __init__(self, *, reset_button=0x2000, connect_settle_seconds=2.0, gamepad=None, sleep=time.sleep):
+        buttons = {1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x1000, 0x2000, 0x4000, 0x8000}
+        if isinstance(reset_button, bool) or not isinstance(reset_button, int) or reset_button not in buttons:
+            raise ValueError("reset_button must be one Xbox button mask, such as B=0x2000")
+        if not math.isfinite(connect_settle_seconds) or connect_settle_seconds < 0:
+            raise ValueError("connect_settle_seconds must be finite and non-negative")
+        self._reset_button = reset_button
+        self.reset_binding = f"xbox-button:0x{reset_button:04x}"
         self._sleep = sleep
         self._closed = False
+        created = gamepad is None
         if gamepad is None:
             try:
                 import vgamepad
@@ -38,7 +49,14 @@ class GamepadController:
                     "No permissions were changed automatically."
                 ) from exc
         self._pad = gamepad
-        self.release()
+        try:
+            if created and connect_settle_seconds:
+                self._sleep(connect_settle_seconds)
+            self.release()
+        except BaseException:
+            self._release_best_effort()
+            self._closed = True
+            raise
 
     def apply(self, action: Action) -> Action:
         if self._closed:
@@ -67,19 +85,30 @@ class GamepadController:
             pass
 
     def reset(self):
-        """Pulse the default give-up binding B; the backend verifies the result."""
+        """Pulse the configured Give Up button (B by default).
+
+        Confirm its binding in the game's controls settings. A checkpoint
+        respawn can match the starting pose without restarting the race clock.
+        """
+        self._pulse_button(self._reset_button, "reset")
+
+    def dismiss_finish_popup(self):
+        """Confirm the finish popup with A, only after an observed finish."""
+        self._pulse_button(0x1000, "finish-popup confirmation")
+
+    def _pulse_button(self, button, operation):
         if self._closed:
             raise ControlError("Gamepad is closed")
         self.release()
         try:
-            self._pad.press_button(button=0x2000)
+            self._pad.press_button(button=button)
             self._pad.update()
             self._sleep(0.1)
-            self._pad.release_button(button=0x2000)
+            self._pad.release_button(button=button)
             self._pad.update()
         except Exception as exc:
             self._release_best_effort()
-            raise ControlError("Gamepad reset failed; do not retry an uncertain reset") from exc
+            raise ControlError(f"Gamepad {operation} failed; do not retry uncertain input") from exc
         finally:
             self._release_best_effort()
 
@@ -100,7 +129,7 @@ class KeyboardController:
     """
 
     action_profile = "keyboard:steer{-1,0,1},pedals{0,1}"
-    _keys = ("Up", "Down", "Left", "Right", "BackSpace")
+    _drive_keys = ("Up", "Down", "Left", "Right")
 
     def __init__(
         self,
@@ -108,6 +137,7 @@ class KeyboardController:
         *,
         class_pattern="Trackmania",
         display=None,
+        reset_key="Delete",
         steer_threshold=0.5,
         pedal_threshold=0.5,
         command_timeout=2.0,
@@ -127,6 +157,11 @@ class KeyboardController:
             raise ValueError("Control thresholds must be in (0, 1]")
         if not class_pattern or command_timeout <= 0:
             raise ValueError("A window class guard and positive command timeout are required")
+        if not isinstance(reset_key, str) or re.fullmatch(r"[A-Za-z0-9_]+", reset_key) is None:
+            raise ValueError("reset_key must be a single X11 keysym, such as Delete")
+        self._reset_key = reset_key
+        self._keys = tuple(dict.fromkeys((*self._drive_keys, reset_key)))
+        self.reset_binding = f"keyboard:{reset_key}"
         self._class_pattern = class_pattern
         self._steer_threshold = steer_threshold
         self._pedal_threshold = pedal_threshold
@@ -210,14 +245,15 @@ class KeyboardController:
             pass
 
     def reset(self):
+        """Pulse Give Up (Delete by default), not checkpoint respawn."""
         if self._closed:
             raise ControlError("Keyboard controller is closed")
         self.release()
         try:
             self._guard()
-            self._run("keydown", "BackSpace")
+            self._run("keydown", self._reset_key)
             self._sleep(0.1)
-            self._run("keyup", "BackSpace")
+            self._run("keyup", self._reset_key)
         except Exception as exc:
             raise ControlError("Keyboard reset failed; do not retry an uncertain reset") from exc
         finally:
